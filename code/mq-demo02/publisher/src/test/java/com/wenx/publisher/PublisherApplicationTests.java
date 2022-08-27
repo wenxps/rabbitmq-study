@@ -1,6 +1,8 @@
 package com.wenx.publisher;
 
 import com.wenx.publisher.config.RabbitConfig;
+import com.wenx.publisher.config.fanout.FanoutConfig;
+import com.wenx.publisher.config.topic.TopicConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +24,18 @@ class PublisherApplicationTests {
         for (int i = 0; i < 20; i++) {
             rabbitTemplate.convertAndSend(RabbitConfig.HELLO_WORLD_QUEUE_NAME,"你好 wenx"+i);
         }
+    }
+
+    @Test
+    void fanout() {
+        rabbitTemplate.convertAndSend(FanoutConfig.FANOUT_EXCHANGE_NAME,null,"这条消息发给队列");
+    }
+
+    @Test
+    void topic() {
+        rabbitTemplate.convertAndSend(TopicConfig.TOPIC_EXCHANGE_NAME,"xiaomi.news","小米新闻");
+        rabbitTemplate.convertAndSend(TopicConfig.TOPIC_EXCHANGE_NAME,"huawei.news","华为");
+        rabbitTemplate.convertAndSend(TopicConfig.TOPIC_EXCHANGE_NAME,"huawei.phone.news","华为手机新闻");
     }
 
 }

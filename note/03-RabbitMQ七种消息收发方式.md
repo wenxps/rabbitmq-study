@@ -513,3 +513,55 @@ void topic() {
 ```
 
 根据 RabbitTopicConfig 中的配置，第一条消息将被路由到名称为 “xiaomi” 的 Queue 上，第二条消息将被路由到名为 “huawei” 的 Queue 上，第三条消息将被路由到名为 “xiaomi” 以及名为 “phone” 的 Queue 上，第四条消息将被路由到名为 “huawei” 以及名为 “phone” 的 Queue 上，最后一条消息则将被路由到名为 “phone” 的 Queue 上。
+
+##### 3.3.3.4 Header
+
+HeadersExchange 是一种使用较少的路由策略，HeadersExchange 会根据消息的 Header 将消息路由到不同的 Queue 上，这种策略也和 routingkey无关，配置如下：
+
+```java
+/**
+ * 根据消息的头信息，来确定去哪个队列
+ */
+@Configuration
+public class HeaderConfig {
+
+    public static final String HEADER_QUEUE_NAME_NAME = "header_queue_name_name";
+    public static final String HEADER_QUEUE_NAME_AGE = "header_queue_name_age";
+
+    public static final String HEADER_EXCHANGE_NAME = "header_exchange_name";
+
+    @Bean
+    Queue headerQueue1(){
+        return new Queue(HEADER_QUEUE_NAME_NAME,true,false,false);
+    }
+
+    @Bean
+    Queue headerQueue2(){
+        return new Queue(HEADER_QUEUE_NAME_AGE,true,false,false);
+    }
+
+
+    @Bean
+    HeadersExchange headerExchange(){
+        return new HeadersExchange(HEADER_EXCHANGE_NAME,true,false);
+    }
+
+    @Bean
+    Binding headerBing1(){
+        return BindingBuilder.bind(headerQueue1())
+                .to(headerExchange())
+                //如果将来消息中包含 name 属性，就算匹配成功
+                .where("name").exists();
+    }
+
+    @Bean
+    Binding headerBing2(){
+        return BindingBuilder.bind(headerQueue2())
+                .to(headerExchange())
+                //如果将来消息中包含 age 属性并且等于 99，就算匹配成功
+                .where("age").matches(99);
+    }
+
+}
+```
+

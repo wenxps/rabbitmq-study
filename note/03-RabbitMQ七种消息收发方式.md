@@ -565,3 +565,48 @@ public class HeaderConfig {
 }
 ```
 
+这里的配置大部分和前面介绍的一样，差别主要体现的 Binding 的配置上，第一个 bindingName 方法中，whereAny 表示消息的 Header 中只要有一个 Header 匹配上 map 中的 key/value，就把该消息路由到名为 “name-queue” 的 Queue 上，这里也可以使用 whereAll 方法，表示消息的所有 Header 都要匹配。whereAny 和 whereAll 实际上对应了一个名为 x-match 的属性。bindingAge 中的配置则表示只要消息的 Header 中包含 age，不管 age 的值是多少，都将消息路由到名为 “age-queue” 的 Queue 上。
+
+接下来创建两个消息消费者：
+
+```java
+@Component
+public class HeaderReveive {
+    @RabbitListener(queues = HeaderConfig.HEADER_QUEUE_NAME_NAME)
+    public void handleMsg1(byte[] message) throws IOException {
+        System.out.println("HEADER-NAME消息内容1 = " + new String(message,0,message.length));
+    }
+
+    @RabbitListener(queues = HeaderConfig.HEADER_QUEUE_NAME_AGE)
+    public void handleMsg2(byte[] message) throws IOException {
+        System.out.println("HEADER-AGE消息内容2 = " + new String(message,0,message.length));
+    }
+
+}
+```
+
+注意这里的参数用 byte 数组接收。然后在单元测试中创建消息的发送方法，这里消息的发送也和 routingkey 无关，如下：
+
+```java
+@Test
+void header() {
+    Message nameMsg = MessageBuilder.withBody("hello zhangsan".getBytes(StandardCharsets.UTF_8)).setHeader("name", "aaa").build();
+    Message ageMsg = MessageBuilder.withBody("hello lisi".getBytes(StandardCharsets.UTF_8)).setHeader("age", 99).build();
+    rabbitTemplate.send(HeaderConfig.HEADER_EXCHANGE_NAME,null,nameMsg);
+    rabbitTemplate.send(HeaderConfig.HEADER_EXCHANGE_NAME,null,ageMsg);
+}
+```
+
+这里创建两条消息，两条消息具有不同的 header，不同 header 的消息将被发到不同的 Queue 中去。
+
+#### 3.3.4 Routing
+
+这种情况是这样：
+
+一个生产者，一个交换机，两个队列，两个消费者，生产者在创建 Exchange 后，根据 RoutingKey 去绑定相应的队列，并且在发送消息时，指定消息的具体 RoutingKey 即可。
+
+如下图：
+
+![图片](D:/dev/local_blog/消息队列/01.RabbitMQ教程/640-16539874320832.png)
+
+这个就是按照 routing key 去路由消息
